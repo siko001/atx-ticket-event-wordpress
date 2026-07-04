@@ -157,14 +157,24 @@ final class SettingsPage {
 		}
 
 		if ( 'pages' === $tab ) {
+			$settings       = Plugin::settings();
+			$page_usable    = static fn ( int $page_id ): bool => $page_id > 0 && 'page' === get_post_type( $page_id ) && 'trash' !== get_post_status( $page_id );
+			$events_page_id = (int) get_option( 'atx_ticketing_events_page_id', 0 );
+			$all_exist      = $page_usable( $events_page_id )
+				&& $page_usable( (int) $settings['success_page_id'] )
+				&& $page_usable( (int) $settings['cancel_page_id'] );
+
 			?>
-			<p><?php esc_html_e( 'Buyers land on these pages after Stripe checkout. Use the button to create sensible defaults (an Events listing page, a success page and a cancel page), or pick existing pages below.', 'atx-digital-ticketing-connect' ); ?></p>
-			<p>
-				<button type="button" class="button atx-tool" data-action="atx_ticketing_create_pages">
-					<?php esc_html_e( 'Create default pages', 'atx-digital-ticketing-connect' ); ?>
-				</button>
-				<span class="atx-tool-result" aria-live="polite"></span>
-			</p>
+			<p><?php esc_html_e( 'Buyers land on these pages after Stripe checkout.', 'atx-digital-ticketing-connect' ); ?></p>
+			<?php if ( ! $all_exist ) : ?>
+				<p>
+					<button type="button" class="button atx-tool" data-action="atx_ticketing_create_pages">
+						<?php esc_html_e( 'Create default pages', 'atx-digital-ticketing-connect' ); ?>
+					</button>
+					<span class="atx-tool-result" aria-live="polite"></span>
+				</p>
+				<p class="description"><?php esc_html_e( 'Creates whichever of the defaults are missing: an Events listing page, a checkout success page and a cancel page.', 'atx-digital-ticketing-connect' ); ?></p>
+			<?php endif; ?>
 			<hr>
 			<?php
 		}

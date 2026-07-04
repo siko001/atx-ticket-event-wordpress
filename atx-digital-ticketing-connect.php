@@ -3,7 +3,7 @@
  * Plugin Name:       ATX Digital Ticketing Connect
  * Plugin URI:        https://atxdigital.example/ticketing
  * Description:       Read-only mirror of events from the ATX Digital ticketing platform, with ticket checkout hand-off to Stripe. Events are managed in the Laravel admin — WordPress displays them.
- * Version:           1.0.0
+ * Version:           1.3.1
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            ATX Digital
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'ATX_TICKETING_VERSION', '1.0.0' );
+define( 'ATX_TICKETING_VERSION', '1.3.1' );
 define( 'ATX_TICKETING_FILE', __FILE__ );
 define( 'ATX_TICKETING_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ATX_TICKETING_URL', plugin_dir_url( __FILE__ ) );

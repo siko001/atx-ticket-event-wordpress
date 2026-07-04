@@ -107,7 +107,11 @@
 
 				var questionsHtml = '';
 				formQuestions(form).forEach(function (question) {
-					if (question.ticket_type_id && String(question.ticket_type_id) !== String(typeId)) {
+					var scope = Array.isArray(question.ticket_type_ids)
+						? question.ticket_type_ids
+						: (question.ticket_type_id ? [question.ticket_type_id] : []);
+
+					if (scope.length && scope.map(String).indexOf(String(typeId)) === -1) {
 						return;
 					}
 					questionsHtml += questionFieldHtml(question, 'attendee_q[' + typeId + '][' + unit + '][' + question.id + ']');

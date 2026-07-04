@@ -119,6 +119,12 @@ jobs:
                 $contents,
                 1
             );
+            $contents = preg_replace(
+                "/define\( 'ATX_TICKETING_VERSION', '[^']*' \)/",
+                "define( 'ATX_TICKETING_VERSION', '$version' )",
+                $contents,
+                1
+            );
             file_put_contents($file, $contents);
           ' "$BUILD_DIR/${PLUGIN_FILE}" "$VERSION"
 

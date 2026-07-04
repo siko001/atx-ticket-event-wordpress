@@ -113,15 +113,18 @@ $atx_format_price = static function ( int $minor, string $currency ): string {
 			foreach ( $atx_questions as $atx_question ) :
 				$atx_q_id    = (int) ( $atx_question['id'] ?? 0 );
 				$atx_q_label = (string) ( $atx_question['label'] ?? '' );
-				$atx_q_scope = isset( $atx_question['ticket_type_id'] ) ? (int) $atx_question['ticket_type_id'] : 0;
-				if ( $atx_q_scope > 0 && isset( $atx_type_names[ $atx_q_scope ] ) ) {
-					/* translators: %s: ticket type name. */
-					$atx_q_label .= ' ' . sprintf( __( '(%s tickets only)', 'atx-digital-ticketing-connect' ), $atx_type_names[ $atx_q_scope ] );
+				$atx_q_scope = array_map( 'absint', is_array( $atx_question['ticket_type_ids'] ?? null ) ? $atx_question['ticket_type_ids'] : array_filter( [ (int) ( $atx_question['ticket_type_id'] ?? 0 ) ] ) );
+				if ( $atx_q_scope ) {
+					$atx_scope_names = implode( ', ', array_intersect_key( $atx_type_names, array_flip( $atx_q_scope ) ) );
+					if ( '' !== $atx_scope_names ) {
+						/* translators: %s: ticket type name(s). */
+						$atx_q_label .= ' ' . sprintf( __( '(%s tickets only)', 'atx-digital-ticketing-connect' ), $atx_scope_names );
+					}
 				}
 				$atx_q_type = (string) ( $atx_question['type'] ?? 'text' );
 				// Type-scoped questions are validated server-side only when that
 				// type is actually bought — never hard-require them client-side.
-				$atx_q_required = ! empty( $atx_question['is_required'] ) && 0 === $atx_q_scope;
+				$atx_q_required = ! empty( $atx_question['is_required'] ) && ! $atx_q_scope;
 				$atx_q_options  = is_array( $atx_question['options'] ?? null ) ? $atx_question['options'] : [];
 				$atx_q_name     = 'answer[' . $atx_q_id . ']';
 				?>
