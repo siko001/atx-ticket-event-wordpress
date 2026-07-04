@@ -340,3 +340,17 @@ video.atx-gallery__img { background: #000; }
 	color: rgb(255 255 255 / 0.75);
 	font-size: 0.85rem;
 }
+
+.atx-attendee-row__self {
+	background: none;
+	border: 0;
+	padding: 0;
+	margin-left: 0.5rem;
+	font-size: 0.8rem;
+	text-decoration: underline;
+	cursor: pointer;
+	color: inherit;
+	opacity: 0.75;
+}
+
+.atx-attendee-row__self:hover { opacity: 1; }

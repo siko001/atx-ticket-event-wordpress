@@ -117,10 +117,14 @@
 					questionsHtml += questionFieldHtml(question, 'attendee_q[' + typeId + '][' + unit + '][' + question.id + ']');
 				});
 
+				var useMine = total === 1
+					? ' <button type="button" class="atx-attendee-row__self" data-self-name="' + nameField + '" data-self-email="' + emailField + '">Use my details</button>'
+					: '';
+
 				var row = document.createElement('div');
 				row.className = 'atx-attendee-row';
 				row.innerHTML =
-					'<span class="atx-attendee-row__label">' + typeName + ' — ticket ' + (unit + 1) + '</span>' +
+					'<span class="atx-attendee-row__label">' + typeName + ' — ticket ' + (unit + 1) + useMine + '</span>' +
 					'<input type="text" name="' + nameField + '" placeholder="Full name *" required autocomplete="off">' +
 					'<input type="email" name="' + emailField + '" placeholder="Email (optional)" autocomplete="off">' +
 					(questionsHtml ? '<div class="atx-attendee-row__questions">' + questionsHtml + '</div>' : '');
@@ -319,6 +323,25 @@
 	document.addEventListener('submit', function (event) {
 		if (event.target && event.target.classList.contains('atx-ticket-form')) {
 			handleSubmit(event);
+		}
+	});
+
+	// "Use my details": copy the buyer's name/email into an attendee row.
+	document.addEventListener('click', function (event) {
+		if (!event.target || !event.target.classList || !event.target.classList.contains('atx-attendee-row__self')) {
+			return;
+		}
+		var form = event.target.closest('.atx-ticket-form');
+		if (!form) {
+			return;
+		}
+		var nameInput = form.querySelector('[name="' + event.target.dataset.selfName + '"]');
+		var emailInput = form.querySelector('[name="' + event.target.dataset.selfEmail + '"]');
+		if (nameInput) {
+			nameInput.value = ((form.querySelector('[name="purchaser_name"]') || {}).value || '').trim();
+		}
+		if (emailInput) {
+			emailInput.value = ((form.querySelector('[name="purchaser_email"]') || {}).value || '').trim();
 		}
 	});
 

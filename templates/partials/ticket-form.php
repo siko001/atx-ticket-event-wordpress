@@ -82,7 +82,7 @@ $atx_format_price = static function ( int $minor, string $currency ): string {
 
 	<fieldset class="atx-ticket-form__attendees" data-attendee-fields hidden>
 		<legend><?php esc_html_e( 'Who are the tickets for?', 'atx-digital-ticketing-connect' ); ?></legend>
-		<p class="atx-field__hint"><?php esc_html_e( 'This event issues personal tickets — enter a name for each one. Email is optional (tickets are also sent to the buyer).', 'atx-digital-ticketing-connect' ); ?></p>
+		<p class="atx-field__hint"><?php esc_html_e( 'This event issues personal tickets — enter a name for each one. Every ticket has its own QR code. Email is optional: people with their own email receive their ticket directly (the buyer always gets all tickets too).', 'atx-digital-ticketing-connect' ); ?></p>
 		<div class="atx-attendees"></div>
 	</fieldset>
 
