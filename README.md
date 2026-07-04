@@ -18,8 +18,12 @@ for both sides.
    `_atx_status`, …), the `_atx_payload` JSON blob and `atx_event_category` terms —
    idempotently, keyed on the Laravel event id.
 2. **Display** — `[atx_events category="…" limit="…"]`, `[atx_event id="…"]`, or the
-   "ATX Events" block (all share one PHP render path). Templates ship in `templates/`
-   and can be overridden in `your-theme/atx-ticketing/`.
+   "ATX Events" block (all share one PHP render path). The `/events/` archive,
+   category archives and single event permalinks also render through the plugin
+   templates by default (Events → Settings → Display), so themes with minimal
+   generic templates still show full event details; both toggles there —
+   plugin templates and plugin styling — can be switched off. Templates ship in
+   `templates/` and can be overridden in `your-theme/atx-ticketing/`.
 3. **Checkout out** — the vanilla-JS ticket form posts to
    `/wp-json/atx-ticketing/v1/checkout` (REST-nonce protected); `Frontend\CheckoutProxy`
    sanitises and forwards it server-side via `wp_remote_post` and the browser is

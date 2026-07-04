@@ -12,6 +12,7 @@ use AtxDigitalTicketing\Admin\Tools;
 use AtxDigitalTicketing\Frontend\Block;
 use AtxDigitalTicketing\Frontend\CheckoutProxy;
 use AtxDigitalTicketing\Frontend\Shortcodes;
+use AtxDigitalTicketing\Frontend\TemplateOverride;
 use AtxDigitalTicketing\PostTypes\EventPostType;
 use AtxDigitalTicketing\Rest\WebhookController;
 
@@ -36,6 +37,7 @@ final class Plugin {
 		add_action( 'init', [ EventPostType::class, 'register' ] );
 		add_action( 'init', [ Block::class, 'register' ] );
 		add_action( 'init', [ Shortcodes::class, 'register' ] );
+		TemplateOverride::register();
 		add_action( 'rest_api_init', [ WebhookController::class, 'register_routes' ] );
 		add_action( 'rest_api_init', [ CheckoutProxy::class, 'register_routes' ] );
 		add_action( 'admin_menu', [ SettingsPage::class, 'register_menu' ] );
@@ -77,17 +79,29 @@ final class Plugin {
 	}
 
 	/**
+	 * Enqueue the plugin's front-end stylesheet unless "Use plugin styling"
+	 * is switched off (custom/theme styling takes over entirely).
+	 */
+	public static function enqueue_frontend_style(): void {
+		if ( ! empty( self::settings()['use_plugin_styles'] ) ) {
+			wp_enqueue_style( 'atx-ticketing-frontend' );
+		}
+	}
+
+	/**
 	 * Plugin settings with defaults.
 	 *
-	 * @return array{api_base_url: string, webhook_secret: string, success_page_id: int, cancel_page_id: int, admin_url: string}
+	 * @return array{api_base_url: string, webhook_secret: string, success_page_id: int, cancel_page_id: int, admin_url: string, use_plugin_templates: int, use_plugin_styles: int}
 	 */
 	public static function settings(): array {
 		$defaults = [
-			'api_base_url'    => '',
-			'webhook_secret'  => '',
-			'success_page_id' => 0,
-			'cancel_page_id'  => 0,
-			'admin_url'       => '',
+			'api_base_url'         => '',
+			'webhook_secret'       => '',
+			'success_page_id'      => 0,
+			'cancel_page_id'       => 0,
+			'admin_url'            => '',
+			'use_plugin_templates' => 1,
+			'use_plugin_styles'    => 1,
 		];
 
 		$stored = get_option( 'atx_ticketing_settings', [] );

@@ -7,6 +7,7 @@
 
 namespace AtxDigitalTicketing\Frontend;
 
+use AtxDigitalTicketing\Plugin;
 use AtxDigitalTicketing\PostTypes\EventPostType;
 use AtxDigitalTicketing\Support\TemplateLoader;
 use WP_Query;
@@ -60,7 +61,7 @@ final class Shortcodes {
 
 		$query = new WP_Query( $args );
 
-		wp_enqueue_style( 'atx-ticketing-frontend' );
+		Plugin::enqueue_frontend_style();
 
 		$html = TemplateLoader::render(
 			'archive-event',
@@ -87,7 +88,14 @@ final class Shortcodes {
 			return '<p>' . esc_html__( 'Event not found.', 'atx-digital-ticketing-connect' ) . '</p>';
 		}
 
-		wp_enqueue_style( 'atx-ticketing-frontend' );
+		return self::render_single_post( $post );
+	}
+
+	/**
+	 * Shared single-event renderer (shortcode, block and template override).
+	 */
+	public static function render_single_post( \WP_Post $post ): string {
+		Plugin::enqueue_frontend_style();
 		wp_enqueue_script( 'atx-ticketing-ticket-form' );
 
 		return TemplateLoader::render(

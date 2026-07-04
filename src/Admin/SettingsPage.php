@@ -48,6 +48,11 @@ final class SettingsPage {
 		add_settings_field( 'webhook_secret', __( 'Webhook shared secret', 'atx-digital-ticketing-connect' ), [ self::class, 'field_webhook_secret' ], 'atx-ticketing-connection', 'atx_ticketing_connection' );
 		add_settings_field( 'admin_url', __( 'ATX admin panel URL', 'atx-digital-ticketing-connect' ), [ self::class, 'field_admin_url' ], 'atx-ticketing-connection', 'atx_ticketing_connection' );
 
+		// Display tab.
+		add_settings_section( 'atx_ticketing_display', '', '__return_false', 'atx-ticketing-display' );
+		add_settings_field( 'use_plugin_templates', __( 'Event page templates', 'atx-digital-ticketing-connect' ), [ self::class, 'field_use_plugin_templates' ], 'atx-ticketing-display', 'atx_ticketing_display' );
+		add_settings_field( 'use_plugin_styles', __( 'Styling', 'atx-digital-ticketing-connect' ), [ self::class, 'field_use_plugin_styles' ], 'atx-ticketing-display', 'atx_ticketing_display' );
+
 		// Pages tab.
 		add_settings_section( 'atx_ticketing_pages', '', '__return_false', 'atx-ticketing-pages' );
 		add_settings_field( 'success_page_id', __( 'Checkout success page', 'atx-digital-ticketing-connect' ), [ self::class, 'field_success_page' ], 'atx-ticketing-pages', 'atx_ticketing_pages' );
@@ -81,12 +86,18 @@ final class SettingsPage {
 			'cancel_page_id'  => array_key_exists( 'cancel_page_id', $input )
 				? absint( $input['cancel_page_id'] )
 				: (int) $current['cancel_page_id'],
+			'use_plugin_templates' => array_key_exists( 'use_plugin_templates', $input )
+				? (int) (bool) $input['use_plugin_templates']
+				: (int) $current['use_plugin_templates'],
+			'use_plugin_styles' => array_key_exists( 'use_plugin_styles', $input )
+				? (int) (bool) $input['use_plugin_styles']
+				: (int) $current['use_plugin_styles'],
 		];
 	}
 
 	private static function current_tab(): string {
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'connection'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		return in_array( $tab, [ 'connection', 'pages', 'tools' ], true ) ? $tab : 'connection';
+		return in_array( $tab, [ 'connection', 'display', 'pages', 'tools' ], true ) ? $tab : 'connection';
 	}
 
 	public static function render(): void {
@@ -98,6 +109,7 @@ final class SettingsPage {
 		$base = admin_url( 'edit.php?post_type=' . EventPostType::POST_TYPE . '&page=' . self::SLUG );
 		$tabs = [
 			'connection' => __( 'Connection', 'atx-digital-ticketing-connect' ),
+			'display'    => __( 'Display', 'atx-digital-ticketing-connect' ),
 			'pages'      => __( 'Pages', 'atx-digital-ticketing-connect' ),
 			'tools'      => __( 'Tools', 'atx-digital-ticketing-connect' ),
 		];
@@ -224,6 +236,26 @@ final class SettingsPage {
 				'workingLabel'    => __( 'Working…', 'atx-digital-ticketing-connect' ),
 			]
 		);
+	}
+
+	public static function field_use_plugin_templates(): void {
+		printf(
+			'<input type="hidden" name="%1$s[use_plugin_templates]" value="0"><label><input type="checkbox" name="%1$s[use_plugin_templates]" value="1" %2$s> %3$s</label>',
+			esc_attr( self::OPTION ),
+			checked( ! empty( Plugin::settings()['use_plugin_templates'] ), true, false ),
+			esc_html__( 'Use the plugin templates for the events archive and single event pages', 'atx-digital-ticketing-connect' )
+		);
+		echo '<p class="description">' . esc_html__( 'Overrides the theme\'s generic templates on /events/ and event pages — useful when the theme hides or minimises the event details. Individual templates can still be customised by copying them to {your-theme}/atx-ticketing/. Turn off to let the theme handle those pages entirely.', 'atx-digital-ticketing-connect' ) . '</p>';
+	}
+
+	public static function field_use_plugin_styles(): void {
+		printf(
+			'<input type="hidden" name="%1$s[use_plugin_styles]" value="0"><label><input type="checkbox" name="%1$s[use_plugin_styles]" value="1" %2$s> %3$s</label>',
+			esc_attr( self::OPTION ),
+			checked( ! empty( Plugin::settings()['use_plugin_styles'] ), true, false ),
+			esc_html__( 'Use the plugin\'s built-in styling', 'atx-digital-ticketing-connect' )
+		);
+		echo '<p class="description">' . esc_html__( 'Untick to stop loading the plugin stylesheet and style the event cards, forms and buttons yourself (classes are prefixed atx-).', 'atx-digital-ticketing-connect' ) . '</p>';
 	}
 
 	public static function field_api_base_url(): void {

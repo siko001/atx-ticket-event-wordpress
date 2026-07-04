@@ -195,3 +195,14 @@
 	max-height: 44px;
 	width: auto;
 }
+
+/* Full-page wrapper used when "Use plugin templates" is on. */
+.atx-wrap {
+	max-width: 900px;
+	margin: 0 auto;
+	padding: 2rem 1rem 3rem;
+}
+
+.atx-wrap__title {
+	margin: 0 0 1.5rem;
+}
