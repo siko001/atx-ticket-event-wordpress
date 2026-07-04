@@ -97,6 +97,7 @@ final class Shortcodes {
 	public static function render_single_post( \WP_Post $post ): string {
 		Plugin::enqueue_frontend_style();
 		wp_enqueue_script( 'atx-ticketing-ticket-form' );
+		wp_enqueue_script( 'atx-ticketing-gallery' );
 
 		return TemplateLoader::render(
 			'single-event',

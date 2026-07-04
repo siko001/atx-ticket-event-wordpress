@@ -139,6 +139,14 @@ final class Plugin {
 			true
 		);
 
+		wp_register_script(
+			'atx-ticketing-gallery',
+			ATX_TICKETING_URL . 'assets/js/gallery.js',
+			[],
+			ATX_TICKETING_VERSION,
+			true
+		);
+
 		wp_localize_script(
 			'atx-ticketing-ticket-form',
 			'atxTicketing',

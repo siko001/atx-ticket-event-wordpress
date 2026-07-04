@@ -98,15 +98,30 @@ $atx_format_price = static function ( int $minor, string $currency ): string {
 		</p>
 	</fieldset>
 
-	<?php if ( $atx_questions ) : ?>
+	<script type="application/json" data-atx-questions><?php echo wp_json_encode( $atx_questions ); ?></script>
+
+	<?php $atx_named_mode = ! empty( $event['requires_attendee_details'] ); ?>
+	<?php if ( $atx_questions && ! $atx_named_mode ) : ?>
 		<fieldset class="atx-ticket-form__questions">
 			<legend><?php esc_html_e( 'Registration details', 'atx-digital-ticketing-connect' ); ?></legend>
 			<?php
+			$atx_type_names = [];
+			foreach ( $atx_ticket_types as $atx_tt ) {
+				$atx_type_names[ (int) ( $atx_tt['id'] ?? 0 ) ] = (string) ( $atx_tt['name'] ?? '' );
+			}
+
 			foreach ( $atx_questions as $atx_question ) :
-				$atx_q_id       = (int) ( $atx_question['id'] ?? 0 );
-				$atx_q_label    = (string) ( $atx_question['label'] ?? '' );
-				$atx_q_type     = (string) ( $atx_question['type'] ?? 'text' );
-				$atx_q_required = ! empty( $atx_question['is_required'] );
+				$atx_q_id    = (int) ( $atx_question['id'] ?? 0 );
+				$atx_q_label = (string) ( $atx_question['label'] ?? '' );
+				$atx_q_scope = isset( $atx_question['ticket_type_id'] ) ? (int) $atx_question['ticket_type_id'] : 0;
+				if ( $atx_q_scope > 0 && isset( $atx_type_names[ $atx_q_scope ] ) ) {
+					/* translators: %s: ticket type name. */
+					$atx_q_label .= ' ' . sprintf( __( '(%s tickets only)', 'atx-digital-ticketing-connect' ), $atx_type_names[ $atx_q_scope ] );
+				}
+				$atx_q_type = (string) ( $atx_question['type'] ?? 'text' );
+				// Type-scoped questions are validated server-side only when that
+				// type is actually bought — never hard-require them client-side.
+				$atx_q_required = ! empty( $atx_question['is_required'] ) && 0 === $atx_q_scope;
 				$atx_q_options  = is_array( $atx_question['options'] ?? null ) ? $atx_question['options'] : [];
 				$atx_q_name     = 'answer[' . $atx_q_id . ']';
 				?>

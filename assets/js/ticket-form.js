@@ -27,6 +27,48 @@
 		return form.dataset.requiresAttendees === '1';
 	}
 
+	function formQuestions(form) {
+		var tag = form.querySelector('[data-atx-questions]');
+		if (!tag) {
+			return [];
+		}
+		try {
+			var parsed = JSON.parse(tag.textContent);
+			return Array.isArray(parsed) ? parsed : [];
+		} catch (e) {
+			return [];
+		}
+	}
+
+	function questionFieldHtml(question, fieldName) {
+		var required = question.is_required ? ' required' : '';
+		var label = question.label + (question.is_required ? ' *' : '');
+		var options = Array.isArray(question.options) ? question.options : [];
+		var html = '<div class="atx-field atx-field--attendee-q">';
+
+		if (question.type === 'checkbox') {
+			html += '<label><input type="checkbox" name="' + fieldName + '" value="1"' + required + '> ' + label + '</label>';
+		} else if (question.type === 'textarea') {
+			html += '<label>' + label + '</label><textarea rows="2" name="' + fieldName + '"' + required + '></textarea>';
+		} else if (question.type === 'select') {
+			html += '<label>' + label + '</label><select name="' + fieldName + '"' + required + '><option value="">…</option>';
+			options.forEach(function (option) {
+				html += '<option value="' + String(option).replace(/"/g, '&quot;') + '">' + option + '</option>';
+			});
+			html += '</select>';
+		} else if (question.type === 'radio') {
+			html += '<span class="atx-field__label">' + label + '</span>';
+			options.forEach(function (option, index) {
+				html += '<label class="atx-field__radio"><input type="radio" name="' + fieldName + '" value="'
+					+ String(option).replace(/"/g, '&quot;') + '"' + (question.is_required && index === 0 ? ' required' : '') + '> ' + option + '</label>';
+			});
+		} else {
+			html += '<label>' + label + '</label><input type="text" name="' + fieldName + '"' + required + '>';
+		}
+
+		return html + '</div>';
+	}
+
 	function renderAttendeeFields(form) {
 		var wrap = form.querySelector('[data-attendee-fields]');
 		var list = form.querySelector('.atx-attendees');
@@ -36,8 +78,18 @@
 
 		// Preserve anything already typed before re-rendering.
 		var previous = {};
-		list.querySelectorAll('input').forEach(function (input) {
-			previous[input.name] = input.value;
+		list.querySelectorAll('input, select, textarea').forEach(function (input) {
+			if (input.type === 'checkbox') {
+				if (input.checked) {
+					previous[input.name] = '__checked__';
+				}
+			} else if (input.type === 'radio') {
+				if (input.checked) {
+					previous[input.name] = input.value;
+				}
+			} else {
+				previous[input.name] = input.value;
+			}
 		});
 
 		list.innerHTML = '';
@@ -53,16 +105,30 @@
 				var nameField = 'attendee_name[' + typeId + '][' + unit + ']';
 				var emailField = 'attendee_email[' + typeId + '][' + unit + ']';
 
+				var questionsHtml = '';
+				formQuestions(form).forEach(function (question) {
+					if (question.ticket_type_id && String(question.ticket_type_id) !== String(typeId)) {
+						return;
+					}
+					questionsHtml += questionFieldHtml(question, 'attendee_q[' + typeId + '][' + unit + '][' + question.id + ']');
+				});
+
 				var row = document.createElement('div');
 				row.className = 'atx-attendee-row';
 				row.innerHTML =
 					'<span class="atx-attendee-row__label">' + typeName + ' — ticket ' + (unit + 1) + '</span>' +
 					'<input type="text" name="' + nameField + '" placeholder="Full name *" required autocomplete="off">' +
-					'<input type="email" name="' + emailField + '" placeholder="Email (optional)" autocomplete="off">';
+					'<input type="email" name="' + emailField + '" placeholder="Email (optional)" autocomplete="off">' +
+					(questionsHtml ? '<div class="atx-attendee-row__questions">' + questionsHtml + '</div>' : '');
 				list.appendChild(row);
 
-				row.querySelectorAll('input').forEach(function (input) {
-					if (previous[input.name]) {
+				row.querySelectorAll('input, select, textarea').forEach(function (input) {
+					if (previous[input.name] === undefined) {
+						return;
+					}
+					if (input.type === 'checkbox' || input.type === 'radio') {
+						input.checked = previous[input.name] === input.value || previous[input.name] === '__checked__';
+					} else {
 						input.value = previous[input.name];
 					}
 				});
@@ -89,6 +155,27 @@
 
 			if (emailInput && emailInput.value.trim() !== '') {
 				attendee.email = emailInput.value.trim();
+			}
+
+			var answers = {};
+			var prefix = 'attendee_q[' + match[1] + '][' + match[2] + ']';
+			form.querySelectorAll('[name^="attendee_q[' + match[1] + '][' + match[2] + ']"]').forEach(function (field) {
+				var qMatch = field.name.slice(prefix.length).match(/^\[(\d+)\]$/);
+				if (!qMatch) {
+					return;
+				}
+				if (field.type === 'checkbox') {
+					answers[qMatch[1]] = field.checked ? '1' : '0';
+				} else if (field.type === 'radio') {
+					if (field.checked) {
+						answers[qMatch[1]] = field.value;
+					}
+				} else if (field.value !== '') {
+					answers[qMatch[1]] = field.value;
+				}
+			});
+			if (Object.keys(answers).length) {
+				attendee.answers = answers;
 			}
 
 			attendees.push(attendee);
@@ -191,7 +278,17 @@
 
 				var messages = [];
 				if (result.data && result.data.errors) {
-					Object.keys(result.data.errors).forEach(function (key) {
+					var errorKeys = Object.keys(result.data.errors);
+
+					// Stale sync fallback: if Laravel demands attendee names but
+					// this page's payload predates the setting, switch the form
+					// into named mode on the spot so the fields appear.
+					if (!requiresAttendees(form) && errorKeys.some(function (key) { return key.indexOf('attendees') === 0; })) {
+						form.dataset.requiresAttendees = '1';
+						renderAttendeeFields(form);
+					}
+
+					errorKeys.forEach(function (key) {
 						result.data.errors[key].forEach(function (message) {
 							messages.push(message);
 						});
