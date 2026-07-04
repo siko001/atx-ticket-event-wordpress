@@ -287,7 +287,7 @@
 					// Stale sync fallback: if Laravel demands attendee names but
 					// this page's payload predates the setting, switch the form
 					// into named mode on the spot so the fields appear.
-					if (!requiresAttendees(form) && errorKeys.some(function (key) { return key.indexOf('attendees') === 0; })) {
+					if (errorKeys.some(function (key) { return key.indexOf('attendees') === 0; })) {
 						form.dataset.requiresAttendees = '1';
 						renderAttendeeFields(form);
 					}
@@ -321,4 +321,32 @@
 			handleSubmit(event);
 		}
 	});
+
+	// Rebuild the per-ticket attendee fields whenever a quantity changes.
+	document.addEventListener('input', function (event) {
+		if (event.target && event.target.matches('input[data-ticket-type]')) {
+			var form = event.target.closest('.atx-ticket-form');
+			if (form) {
+				renderAttendeeFields(form);
+			}
+		}
+	});
+	document.addEventListener('change', function (event) {
+		if (event.target && event.target.matches('input[data-ticket-type]')) {
+			var form = event.target.closest('.atx-ticket-form');
+			if (form) {
+				renderAttendeeFields(form);
+			}
+		}
+	});
+
+	function initAttendeeFields() {
+		document.querySelectorAll('.atx-ticket-form').forEach(renderAttendeeFields);
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initAttendeeFields);
+	} else {
+		initAttendeeFields();
+	}
 })();
