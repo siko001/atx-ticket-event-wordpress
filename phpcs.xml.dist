@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<ruleset name="ATX Digital Ticketing Connect">
+    <description>WordPress-Extra with pragmatic exceptions for PSR-4 class files.</description>
+
+    <file>atx-digital-ticketing-connect.php</file>
+    <file>src</file>
+    <file>templates</file>
+
+    <arg value="ps"/>
+    <arg name="extensions" value="php"/>
+    <arg name="parallel" value="8"/>
+
+    <config name="minimum_wp_version" value="6.4"/>
+    <config name="testVersion" value="8.1-"/>
+
+    <rule ref="WordPress-Extra">
+        <!-- PSR-4 class files instead of class-*.php naming. -->
+        <exclude name="WordPress.Files.FileName"/>
+        <!-- Short array syntax is used throughout. -->
+        <exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+    </rule>
+
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="atx-digital-ticketing-connect"/>
+            </property>
+        </properties>
+    </rule>
+</ruleset>

@@ -1,0 +1,191 @@
+/* ATX Ticketing Connect — minimal, theme-friendly defaults. */
+
+.atx-events {
+	display: grid;
+	gap: 1.5rem;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.atx-events__card {
+	border: 1px solid rgba(0, 0, 0, 0.1);
+	border-radius: 10px;
+	overflow: hidden;
+	background: #fff;
+	display: flex;
+	flex-direction: column;
+}
+
+.atx-events__card.is-cancelled {
+	opacity: 0.6;
+}
+
+.atx-events__thumb img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+.atx-events__body {
+	padding: 1rem 1.25rem 1.25rem;
+}
+
+.atx-events__title {
+	margin: 0 0 0.25rem;
+	font-size: 1.15rem;
+}
+
+.atx-events__date,
+.atx-events__venue {
+	margin: 0.1rem 0;
+	font-size: 0.9rem;
+	opacity: 0.8;
+}
+
+.atx-badge {
+	display: inline-block;
+	padding: 0.1rem 0.55rem;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	vertical-align: middle;
+}
+
+.atx-badge--cancelled {
+	background: #fee2e2;
+	color: #991b1b;
+}
+
+.atx-button {
+	display: inline-block;
+	margin-top: 0.75rem;
+	padding: 0.5rem 1.1rem;
+	border: 0;
+	border-radius: 8px;
+	background: #111827;
+	color: #fff;
+	text-decoration: none;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.atx-button:hover {
+	opacity: 0.85;
+	color: #fff;
+}
+
+/* Ticket form */
+
+.atx-ticket-form {
+	max-width: 40rem;
+}
+
+.atx-ticket-form fieldset {
+	border: 1px solid rgba(0, 0, 0, 0.1);
+	border-radius: 10px;
+	padding: 1rem 1.25rem;
+	margin: 0 0 1.25rem;
+}
+
+.atx-ticket-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	padding: 0.5rem 0;
+	border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
+}
+
+.atx-ticket-row:last-child {
+	border-bottom: 0;
+}
+
+.atx-ticket-row__info small {
+	display: block;
+	opacity: 0.7;
+}
+
+.atx-ticket-row__price {
+	margin-left: 0.5rem;
+	font-weight: 600;
+}
+
+.atx-ticket-row__qty input {
+	width: 4.5rem;
+}
+
+.atx-field {
+	margin: 0 0 0.9rem;
+}
+
+.atx-field label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 0.2rem;
+}
+
+.atx-field input[type='text'],
+.atx-field input[type='email'],
+.atx-field select,
+.atx-field textarea {
+	width: 100%;
+	max-width: 26rem;
+}
+
+.atx-field__radio {
+	display: block;
+	font-weight: 400;
+}
+
+.atx-ticket-form__errors {
+	background: #fee2e2;
+	color: #991b1b;
+	border-radius: 8px;
+	padding: 0.75rem 1rem;
+	margin-bottom: 1rem;
+}
+
+.atx-ticket-form__errors p {
+	margin: 0.15rem 0;
+}
+
+.atx-ticket-form__busy {
+	margin-left: 0.75rem;
+	font-style: italic;
+	opacity: 0.75;
+}
+
+/* Speakers / sponsors */
+
+.atx-speakers,
+.atx-sponsors {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.25rem;
+}
+
+.atx-speakers__item {
+	display: grid;
+	gap: 0.15rem;
+	max-width: 14rem;
+}
+
+.atx-speakers__photo {
+	width: 72px;
+	height: 72px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.atx-speakers__role,
+.atx-speakers__org {
+	font-size: 0.85rem;
+	opacity: 0.75;
+}
+
+.atx-sponsors__item img {
+	max-height: 44px;
+	width: auto;
+}
