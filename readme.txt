@@ -54,6 +54,15 @@ database.
 
 == Changelog ==
 
+= 1.1.0 =
+* Named tickets: per-ticket attendee name/email fields when the event requires them.
+* Test mode, synced two-way with the ATX admin — admin notice + buy-form banner.
+* Media sync: featured image/video and gallery sideloaded into the media library.
+* Settings moved under Events with tabs (Connection / Display / Pages / Tools / Logs),
+  secret generator, test-connection, sync-now, default-page creator and activity logs.
+* Event archive/single pages render through plugin templates (theme-overridable).
+* Self-updates from GitHub Releases.
+
 = 1.0.0 =
 * Initial release: webhook mirror, shortcodes, block, checkout proxy,
   settings screen, theme-overridable templates.
