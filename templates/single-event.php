@@ -46,6 +46,11 @@ $atx_sponsors = is_array( $event['sponsors'] ?? null ) ? $event['sponsors'] : []
 				<?php if ( ! empty( $atx_venue['address'] ) ) : ?>
 					<br><?php echo esc_html( (string) $atx_venue['address'] ); ?>
 				<?php endif; ?>
+				<?php if ( ! empty( $atx_venue['lat'] ) && ! empty( $atx_venue['lng'] ) ) : ?>
+					<br><a href="<?php echo esc_url( 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( $atx_venue['lat'] . ',' . $atx_venue['lng'] ) ); ?>" target="_blank" rel="noopener">
+						<?php esc_html_e( 'View on map ↗', 'atx-digital-ticketing-connect' ); ?>
+					</a>
+				<?php endif; ?>
 			</p>
 		</section>
 	<?php endif; ?>

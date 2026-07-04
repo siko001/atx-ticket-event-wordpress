@@ -41,6 +41,12 @@
 	opacity: 0.8;
 }
 
+.atx-events__excerpt {
+	margin: 0.5rem 0 0.75rem;
+	font-size: 0.95rem;
+	line-height: 1.5;
+}
+
 .atx-badge {
 	display: inline-block;
 	padding: 0.1rem 0.55rem;

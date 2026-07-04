@@ -48,6 +48,12 @@ defined( 'ABSPATH' ) || exit;
 					<p class="atx-events__venue"><?php echo esc_html( $venue ); ?></p>
 				<?php endif; ?>
 
+				<?php if ( '' !== get_the_content() ) : ?>
+					<p class="atx-events__excerpt">
+						<?php echo esc_html( wp_trim_words( wp_strip_all_tags( get_the_content() ), 28 ) ); ?>
+					</p>
+				<?php endif; ?>
+
 				<a class="atx-button" href="<?php the_permalink(); ?>"><?php esc_html_e( 'Details & tickets', 'atx-digital-ticketing-connect' ); ?></a>
 			</div>
 		</article>

@@ -85,8 +85,15 @@ final class EventPostType {
 			'_atx_event_id'      => 'integer',
 			'_atx_starts_at'     => 'string',
 			'_atx_ends_at'       => 'string',
+			'_atx_timezone'      => 'string',
+			'_atx_max_capacity'  => 'integer',
+			'_atx_is_recurring'  => 'boolean',
+			'_atx_published_at'  => 'string',
 			'_atx_venue_name'    => 'string',
 			'_atx_venue_address' => 'string',
+			'_atx_venue_lat'     => 'string',
+			'_atx_venue_lng'     => 'string',
+			'_atx_checkout_url'  => 'string',
 			'_atx_status'        => 'string',
 			'_atx_payload'       => 'string',
 		];
@@ -110,7 +117,24 @@ final class EventPostType {
 		$admin_url = $settings['admin_url'];
 
 		echo '<p>' . esc_html__( 'This event is managed in the ATX Digital admin platform. Changes made here will be overwritten by the next sync.', 'atx-digital-ticketing-connect' ) . '</p>';
-		echo '<p><strong>' . esc_html__( 'Status:', 'atx-digital-ticketing-connect' ) . '</strong> ' . esc_html( $status ?: 'unknown' ) . '</p>';
+
+		$rows = [
+			__( 'Status', 'atx-digital-ticketing-connect' )    => $status ?: 'unknown',
+			__( 'Event ID', 'atx-digital-ticketing-connect' )  => $event_id > 0 ? (string) $event_id : '',
+			__( 'Timezone', 'atx-digital-ticketing-connect' )  => (string) get_post_meta( $post->ID, '_atx_timezone', true ),
+			__( 'Capacity', 'atx-digital-ticketing-connect' )  => (string) get_post_meta( $post->ID, '_atx_max_capacity', true ),
+			__( 'Recurring', 'atx-digital-ticketing-connect' ) => get_post_meta( $post->ID, '_atx_is_recurring', true ) ? __( 'Yes', 'atx-digital-ticketing-connect' ) : '',
+			__( 'Next date', 'atx-digital-ticketing-connect' ) => (string) get_post_meta( $post->ID, '_atx_starts_at', true ),
+			__( 'Venue', 'atx-digital-ticketing-connect' )     => (string) get_post_meta( $post->ID, '_atx_venue_name', true ),
+		];
+
+		foreach ( $rows as $label => $value ) {
+			if ( '' === $value ) {
+				continue;
+			}
+
+			echo '<p style="margin:0.35em 0;"><strong>' . esc_html( $label ) . ':</strong> ' . esc_html( $value ) . '</p>';
+		}
 
 		if ( '' !== $admin_url && $event_id > 0 ) {
 			$url = trailingslashit( $admin_url ) . 'events/' . $event_id . '/edit';

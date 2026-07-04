@@ -79,6 +79,13 @@ final class EventUpserter {
 		update_post_meta( $post_id, '_atx_ends_at', sanitize_text_field( (string) ( $next['ends_at'] ?? '' ) ) );
 		update_post_meta( $post_id, '_atx_venue_name', sanitize_text_field( (string) ( $venue['name'] ?? '' ) ) );
 		update_post_meta( $post_id, '_atx_venue_address', sanitize_text_field( (string) ( $venue['address'] ?? '' ) ) );
+		update_post_meta( $post_id, '_atx_venue_lat', sanitize_text_field( (string) ( $venue['lat'] ?? '' ) ) );
+		update_post_meta( $post_id, '_atx_venue_lng', sanitize_text_field( (string) ( $venue['lng'] ?? '' ) ) );
+		update_post_meta( $post_id, '_atx_timezone', sanitize_text_field( (string) ( $event['timezone'] ?? '' ) ) );
+		update_post_meta( $post_id, '_atx_max_capacity', absint( $event['max_capacity'] ?? 0 ) );
+		update_post_meta( $post_id, '_atx_is_recurring', ! empty( $event['is_recurring'] ) ? 1 : 0 );
+		update_post_meta( $post_id, '_atx_published_at', sanitize_text_field( (string) ( $event['published_at'] ?? '' ) ) );
+		update_post_meta( $post_id, '_atx_checkout_url', esc_url_raw( (string) ( $event['checkout_url'] ?? '' ) ) );
 		update_post_meta( $post_id, '_atx_payload', wp_json_encode( $event ) );
 	}
 
