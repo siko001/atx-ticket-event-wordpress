@@ -59,6 +59,30 @@ final class WebhookController {
 
 		$type = (string) $payload['type'];
 
+		if ( 'connection.mode' === $type ) {
+			$test_mode = ! empty( $payload['event']['test_mode'] );
+
+			Plugin::$suppress_mode_notify = true;
+			$settings                     = Plugin::settings();
+			$settings['test_mode']        = $test_mode ? 1 : 0;
+			update_option( 'atx_ticketing_settings', $settings );
+			Plugin::$suppress_mode_notify = false;
+
+			Logger::log(
+				'sync',
+				sprintf( 'ATX admin switched this site to %s mode.', $test_mode ? 'TEST' : 'live' ),
+				$test_mode ? 'warning' : 'info'
+			);
+
+			return new WP_REST_Response(
+				[
+					'ok'        => true,
+					'test_mode' => $test_mode,
+				],
+				200
+			);
+		}
+
 		if ( ! in_array( $type, [ 'event.published', 'event.updated', 'event.cancelled', 'event.deleted' ], true ) ) {
 			if ( 'connection.test' === $type ) {
 				Logger::log( 'sync', __( 'Laravel tested the connection (signature OK).', 'atx-digital-ticketing-connect' ) );

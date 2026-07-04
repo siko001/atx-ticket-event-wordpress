@@ -34,6 +34,12 @@ $atx_format_price = static function ( int $minor, string $currency ): string {
 	return strtoupper( $currency ) . ' ' . number_format_i18n( $minor / 100, 2 );
 };
 ?>
+<?php if ( ! empty( \AtxDigitalTicketing\Plugin::settings()['test_mode'] ) ) : ?>
+	<div class="atx-test-banner" role="status">
+		<strong><?php esc_html_e( 'TEST MODE', 'atx-digital-ticketing-connect' ); ?></strong>
+		<?php esc_html_e( '— this ticket shop is running in test mode. Orders placed here are for testing and are not real bookings.', 'atx-digital-ticketing-connect' ); ?>
+	</div>
+<?php endif; ?>
 <form class="atx-ticket-form"
 	data-event-id="<?php echo esc_attr( (string) $atx_event_id ); ?>"
 	data-requires-attendees="<?php echo ! empty( $event['requires_attendee_details'] ) ? '1' : '0'; ?>"

@@ -19,6 +19,32 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Tools {
 
+	/**
+	 * Adopt the connection's test-mode flag reported by Laravel (pull-side
+	 * reconciliation — Laravel is the source of truth on pulls).
+	 *
+	 * @param array<string, mixed> $body Response body.
+	 */
+	private static function adopt_test_mode( array $body ): void {
+		if ( ! array_key_exists( 'test_mode', $body ) ) {
+			return;
+		}
+
+		$settings = Plugin::settings();
+		$incoming = ! empty( $body['test_mode'] ) ? 1 : 0;
+
+		if ( (int) $settings['test_mode'] === $incoming ) {
+			return;
+		}
+
+		Plugin::$suppress_mode_notify = true;
+		$settings['test_mode']        = $incoming;
+		update_option( 'atx_ticketing_settings', $settings );
+		Plugin::$suppress_mode_notify = false;
+
+		Logger::log( 'sync', sprintf( 'Adopted %s mode from the ATX admin.', $incoming ? 'TEST' : 'live' ), $incoming ? 'warning' : 'info' );
+	}
+
 	public const NONCE = 'atx_ticketing_tools';
 
 	public static function register(): void {
@@ -100,6 +126,8 @@ final class Tools {
 			);
 		}
 
+		self::adopt_test_mode( $result['body'] );
+
 		wp_send_json_success(
 			[
 				'message' => sprintf(
@@ -132,6 +160,8 @@ final class Tools {
 				]
 			);
 		}
+
+		self::adopt_test_mode( $result['body'] );
 
 		$events   = is_array( $result['body']['events'] ?? null ) ? $result['body']['events'] : [];
 		$upserter = new EventUpserter();

@@ -48,6 +48,7 @@ final class SettingsPage {
 		add_settings_field( 'api_base_url', __( 'Laravel API base URL', 'atx-digital-ticketing-connect' ), [ self::class, 'field_api_base_url' ], 'atx-ticketing-connection', 'atx_ticketing_connection' );
 		add_settings_field( 'webhook_secret', __( 'Webhook shared secret', 'atx-digital-ticketing-connect' ), [ self::class, 'field_webhook_secret' ], 'atx-ticketing-connection', 'atx_ticketing_connection' );
 		add_settings_field( 'admin_url', __( 'ATX admin panel URL', 'atx-digital-ticketing-connect' ), [ self::class, 'field_admin_url' ], 'atx-ticketing-connection', 'atx_ticketing_connection' );
+		add_settings_field( 'test_mode', __( 'Test mode', 'atx-digital-ticketing-connect' ), [ self::class, 'field_test_mode' ], 'atx-ticketing-connection', 'atx_ticketing_connection' );
 
 		// Display tab.
 		add_settings_section( 'atx_ticketing_display', '', '__return_false', 'atx-ticketing-display' );
@@ -93,6 +94,9 @@ final class SettingsPage {
 			'use_plugin_styles'    => array_key_exists( 'use_plugin_styles', $input )
 				? (int) (bool) $input['use_plugin_styles']
 				: (int) $current['use_plugin_styles'],
+			'test_mode'            => array_key_exists( 'test_mode', $input )
+				? (int) (bool) $input['test_mode']
+				: (int) $current['test_mode'],
 		];
 	}
 
@@ -311,6 +315,16 @@ final class SettingsPage {
 			esc_html__( 'Use the plugin\'s built-in styling', 'atx-digital-ticketing-connect' )
 		);
 		echo '<p class="description">' . esc_html__( 'Untick to stop loading the plugin stylesheet and style the event cards, forms and buttons yourself (classes are prefixed atx-).', 'atx-digital-ticketing-connect' ) . '</p>';
+	}
+
+	public static function field_test_mode(): void {
+		printf(
+			'<input type="hidden" name="%1$s[test_mode]" value="0"><label><input type="checkbox" name="%1$s[test_mode]" value="1" %2$s> <strong>%3$s</strong></label>',
+			esc_attr( self::OPTION ),
+			checked( ! empty( Plugin::settings()['test_mode'] ), true, false ),
+			esc_html__( 'This site is in test mode', 'atx-digital-ticketing-connect' )
+		);
+		echo '<p class="description">' . esc_html__( 'Shows a prominent warning in this dashboard and a banner on the ticket form. Saving also updates the connection in the ATX admin — and toggling it there updates this site.', 'atx-digital-ticketing-connect' ) . '</p>';
 	}
 
 	public static function field_api_base_url(): void {
