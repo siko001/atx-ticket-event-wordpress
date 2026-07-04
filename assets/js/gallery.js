@@ -36,6 +36,7 @@
 			media.alt = '';
 		}
 		media.className = 'atx-lightbox__media';
+		media.style.cssText = 'max-width:100%;max-height:86vh;object-fit:contain;border-radius:.5rem;';
 		stage.appendChild(media);
 
 		overlay.querySelector('.atx-lightbox__counter').textContent = (current + 1) + ' / ' + items.length;
@@ -74,6 +75,9 @@
 
 		overlay = document.createElement('div');
 		overlay.className = 'atx-lightbox';
+		// Critical styles inline so the modal works even when the theme
+		// overrides or a stale cached stylesheet lacks .atx-lightbox rules.
+		overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;';
 		overlay.innerHTML =
 			'<button type="button" class="atx-lightbox__close" aria-label="Close">&times;</button>' +
 			'<button type="button" class="atx-lightbox__nav atx-lightbox__nav--prev" aria-label="Previous">&#10094;</button>' +
@@ -82,6 +86,17 @@
 			'<span class="atx-lightbox__counter"></span>';
 		document.body.appendChild(overlay);
 		document.body.style.overflow = 'hidden';
+
+		var stage = overlay.querySelector('.atx-lightbox__stage');
+		stage.style.cssText = 'max-width:88vw;max-height:86vh;display:flex;align-items:center;justify-content:center;';
+
+		overlay.querySelectorAll('.atx-lightbox__close, .atx-lightbox__nav').forEach(function (control) {
+			control.style.cssText += ';position:absolute;background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:999px;width:44px;height:44px;font-size:22px;cursor:pointer;';
+		});
+		overlay.querySelector('.atx-lightbox__close').style.cssText += ';top:1rem;right:1rem;';
+		overlay.querySelector('.atx-lightbox__nav--prev').style.cssText += ';left:1rem;top:50%;transform:translateY(-50%);';
+		overlay.querySelector('.atx-lightbox__nav--next').style.cssText += ';right:1rem;top:50%;transform:translateY(-50%);';
+		overlay.querySelector('.atx-lightbox__counter').style.cssText = 'position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.75);font-size:.85rem;';
 
 		overlay.querySelector('.atx-lightbox__close').addEventListener('click', close);
 		overlay.querySelector('.atx-lightbox__nav--prev').addEventListener('click', function () { step(-1); });
