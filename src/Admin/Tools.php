@@ -52,6 +52,22 @@ final class Tools {
 		add_action( 'wp_ajax_atx_ticketing_sync', [ self::class, 'sync' ] );
 		add_action( 'wp_ajax_atx_ticketing_create_pages', [ self::class, 'create_pages' ] );
 		add_action( 'wp_ajax_atx_ticketing_clear_logs', [ self::class, 'clear_logs' ] );
+		add_action( 'wp_ajax_atx_ticketing_set_uninstall_pref', [ self::class, 'set_uninstall_pref' ] );
+	}
+
+	/**
+	 * Records whether deleting the plugin should also purge its data. Used by
+	 * the prompt shown on the Plugins screen and mirrored by the Tools tab.
+	 */
+	public static function set_uninstall_pref(): void {
+		self::authorize(); // Verifies the nonce and capability.
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified in authorize().
+		$delete = isset( $_POST['delete'] ) && '1' === sanitize_text_field( wp_unslash( (string) $_POST['delete'] ) );
+
+		update_option( 'atx_ticketing_delete_data_on_uninstall', $delete ? 1 : 0 );
+
+		wp_send_json_success( [ 'delete' => $delete ] );
 	}
 
 	private static function authorize(): void {

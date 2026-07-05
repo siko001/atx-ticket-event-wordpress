@@ -204,6 +204,8 @@ final class SettingsPage {
 	}
 
 	private static function render_tools_tab(): void {
+		self::maybe_save_uninstall_pref();
+
 		$last = get_option( 'atx_ticketing_last_sync', [] );
 
 		?>
@@ -227,7 +229,52 @@ final class SettingsPage {
 				?>
 			</p>
 		<?php endif; ?>
+
+		<hr style="margin:2em 0;">
+
+		<?php $delete_data = (bool) get_option( 'atx_ticketing_delete_data_on_uninstall' ); ?>
+		<h2><?php esc_html_e( 'Data &amp; uninstall', 'atx-digital-ticketing-connect' ); ?></h2>
+		<p><?php esc_html_e( 'Choose what happens to the events this site has stored if you ever delete this plugin. Deactivating (e.g. while you pause the events system to save costs) never removes anything — this only applies to deleting the plugin.', 'atx-digital-ticketing-connect' ); ?></p>
+		<form method="post">
+			<?php wp_nonce_field( 'atx_ticketing_uninstall_pref' ); ?>
+			<fieldset>
+				<label style="display:block;margin-bottom:.75em;">
+					<input type="radio" name="atx_delete_data" value="0" <?php checked( ! $delete_data ); ?>>
+					<strong><?php esc_html_e( 'Keep all data (recommended)', 'atx-digital-ticketing-connect' ); ?></strong><br>
+					<span class="description" style="margin-left:1.8em;display:block;">
+						<?php esc_html_e( 'Deleting the plugin leaves the mirrored events, categories, downloaded images and settings in place, so you can reinstall or resume later without re-syncing.', 'atx-digital-ticketing-connect' ); ?>
+					</span>
+				</label>
+				<label style="display:block;">
+					<input type="radio" name="atx_delete_data" value="1" <?php checked( $delete_data ); ?>>
+					<strong><?php esc_html_e( 'Delete everything when the plugin is deleted', 'atx-digital-ticketing-connect' ); ?></strong><br>
+					<span class="description" style="margin-left:1.8em;display:block;">
+						<?php esc_html_e( 'Permanently removes all mirrored events (including past ones), their sponsors/speakers/locations, event categories, downloaded media, logs and settings. The plugin creates no custom database tables, so nothing else is left behind. This cannot be undone.', 'atx-digital-ticketing-connect' ); ?>
+					</span>
+				</label>
+			</fieldset>
+			<p><button type="submit" name="atx_save_uninstall_pref" value="1" class="button"><?php esc_html_e( 'Save data preference', 'atx-digital-ticketing-connect' ); ?></button></p>
+		</form>
 		<?php
+	}
+
+	/**
+	 * Persist the "delete data on uninstall" choice posted from the Tools tab.
+	 */
+	private static function maybe_save_uninstall_pref(): void {
+		if ( ! isset( $_POST['atx_save_uninstall_pref'] ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) || ! check_admin_referer( 'atx_ticketing_uninstall_pref' ) ) {
+			return;
+		}
+
+		$delete = isset( $_POST['atx_delete_data'] ) && '1' === sanitize_text_field( wp_unslash( (string) $_POST['atx_delete_data'] ) );
+		update_option( 'atx_ticketing_delete_data_on_uninstall', $delete ? 1 : 0 );
+
+		add_settings_error( 'atx_ticketing', 'atx_uninstall_saved', __( 'Data preference saved.', 'atx-digital-ticketing-connect' ), 'updated' );
+		settings_errors( 'atx_ticketing' );
 	}
 
 	private static function render_logs_tab(): void {

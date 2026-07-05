@@ -51,6 +51,7 @@ final class Plugin {
 		add_action( 'admin_enqueue_scripts', [ SettingsPage::class, 'enqueue_assets' ] );
 		Tools::register();
 		add_action( 'add_meta_boxes', [ EventPostType::class, 'register_meta_boxes' ] );
+		\AtxDigitalTicketing\Admin\UninstallPrompt::register();
 		add_action( 'wp_enqueue_scripts', [ $this, 'register_assets' ] );
 		// Enqueue at the proper time (during wp_head) for any view that shows
 		// events. Blocks/shortcodes render inside the_content — far too late to

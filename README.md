@@ -121,6 +121,30 @@ wp-admin (categories are viewable but not creatable/editable) — the ATX platfo
 owns them and overwrites local changes on sync. After a plugin update the mirror
 re-derives its display data automatically, so no manual "Sync now" is needed.
 
+## Pausing (hibernation) & uninstalling
+
+All event data — including **past events, sponsors, speakers, locations, media
+and categories** — is stored locally in WordPress (the `_atx_payload` meta, post
+meta, the media library and `atx_event_category` terms). **Displaying events
+never calls Laravel** — only syncing new changes, testing the connection, and
+ticket checkout do.
+
+- **Hibernation (pausing to save costs):** keep the plugin **active** and simply
+  switch off / stop paying for the Laravel backend. The site keeps showing every
+  synced event from its local copy for as long as you like; when you bring
+  Laravel back, run **Tools → Sync now** to catch up. (Note: while Laravel is
+  down, new syncs and live ticket purchases won't work — display is unaffected.)
+- **Deactivating** never deletes anything.
+- **Deleting the plugin** honours **Settings → Tools → Data & uninstall**:
+  *Keep all data* (default — safe to reinstall/resume) or *Delete everything*
+  (removes mirrored events, categories, downloaded media, logs and settings).
+  A prompt with the same choice also appears when you click *Delete* on the
+  Plugins screen. No custom database tables are ever created, so nothing is
+  orphaned either way.
+- **Removing the blocks** is safe: the ATX blocks are server-rendered, so if the
+  plugin is gone they simply render nothing rather than breaking the page.
+  (Shortcodes, if you used any, would show as literal text — prefer the blocks.)
+
 ## Development
 
 ```bash

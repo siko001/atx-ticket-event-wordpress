@@ -3,6 +3,7 @@
     <description>WordPress-Extra with pragmatic exceptions for PSR-4 class files.</description>
 
     <file>atx-digital-ticketing-connect.php</file>
+    <file>uninstall.php</file>
     <file>src</file>
     <file>templates</file>
 
