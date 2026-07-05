@@ -13,6 +13,11 @@
 		if (document.getElementById(STYLE_ID)) {
 			return;
 		}
+		// The plugin stylesheet already carries these rules; only inject the
+		// fallback when it is not loaded (Display → plugin styling off).
+		if (document.getElementById('atx-ticketing-frontend-css')) {
+			return;
+		}
 		var css =
 			'.atx-events--carousel{position:relative;display:block;}' +
 			'.atx-events--carousel .atx-events__track{display:flex;gap:1.5rem;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;padding-bottom:.5rem;scrollbar-width:thin;}' +

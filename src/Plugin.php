@@ -56,6 +56,9 @@ final class Plugin {
 		// events. Blocks/shortcodes render inside the_content — far too late to
 		// enqueue their own CSS/JS into the head — so we detect them up front.
 		add_action( 'wp_enqueue_scripts', [ self::class, 'maybe_enqueue_frontend_assets' ], 20 );
+		// Style server-rendered block previews inside the editor (wp_enqueue_scripts
+		// never runs in wp-admin, so the front-end handles are absent there).
+		add_action( 'enqueue_block_assets', [ self::class, 'enqueue_editor_preview_assets' ] );
 		add_action( 'update_option_atx_ticketing_settings', [ self::class, 'maybe_notify_mode_change' ], 10, 2 );
 		add_action( 'admin_notices', [ self::class, 'test_mode_notice' ] );
 		add_action( 'admin_init', [ self::class, 'maybe_reindex_after_update' ] );
@@ -234,6 +237,41 @@ final class Plugin {
 			wp_enqueue_script( 'atx-ticketing-ticket-form' );
 			wp_enqueue_script( 'atx-ticketing-gallery' );
 		}
+	}
+
+	/**
+	 * Load the front-end stylesheet (and carousel script) into the block editor
+	 * so server-rendered previews of the ATX blocks look like the front end.
+	 * Runs in the admin only; the front end is handled on wp_enqueue_scripts.
+	 * The handles are registered here too because wp_enqueue_scripts — where
+	 * register_assets() normally runs — does not fire in wp-admin.
+	 */
+	public static function enqueue_editor_preview_assets(): void {
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		if ( ! wp_style_is( 'atx-ticketing-frontend', 'registered' ) ) {
+			wp_register_style(
+				'atx-ticketing-frontend',
+				ATX_TICKETING_URL . 'assets/css/frontend.css',
+				[],
+				ATX_TICKETING_VERSION
+			);
+		}
+
+		if ( ! wp_script_is( 'atx-ticketing-events-carousel', 'registered' ) ) {
+			wp_register_script(
+				'atx-ticketing-events-carousel',
+				ATX_TICKETING_URL . 'assets/js/events-carousel.js',
+				[],
+				ATX_TICKETING_VERSION,
+				true
+			);
+		}
+
+		self::enqueue_frontend_style();
+		wp_enqueue_script( 'atx-ticketing-events-carousel' );
 	}
 
 	/**
