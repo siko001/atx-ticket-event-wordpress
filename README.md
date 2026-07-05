@@ -20,8 +20,18 @@ for both sides.
    `Sync\MediaSideloader` downloads the event's main image/video and gallery into the
    media library (deduplicated by source URL); a `connection.mode` envelope flips this
    site's test mode remotely.
-2. **Display** — `[atx_events category="…" limit="…"]`, `[atx_event id="…"]`, or the
-   "ATX Events" block (all share one PHP render path). The `/events/` archive,
+2. **Display** — shortcodes and two Gutenberg blocks share one PHP render path:
+   - `[atx_events]` / **ATX Events** block — a list of events. Options: `scope`
+     (`upcoming` | `past` | `all`), `category` (slug), `limit`, `orderby`
+     (`date` | `title`), `order` (`ASC` | `DESC`), `layout` (`grid` | `carousel`)
+     and `columns` (1–4). The carousel is a dependency-free slider
+     (`assets/js/events-carousel.js`).
+   - `[atx_event id="…"]` — a single event by Laravel event id.
+   - `[atx_featured_event post_id="…" layout="banner|card"]` / **ATX Featured
+     event** block — highlights one event (post id, or the next upcoming when
+     `0`) with per-detail toggles (date/venue/description/button + button text).
+
+   The `/events/` archive,
    category archives and single event permalinks also render through the plugin
    templates by default (Events → Settings → Display), so themes with minimal
    generic templates still show full event details; both toggles there —

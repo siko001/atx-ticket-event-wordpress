@@ -76,7 +76,11 @@ final class EventUpserter {
 
 		update_post_meta( $post_id, '_atx_event_id', (int) $event['id'] );
 		update_post_meta( $post_id, '_atx_status', sanitize_text_field( (string) ( $event['status'] ?? '' ) ) );
-		update_post_meta( $post_id, '_atx_starts_at', sanitize_text_field( (string) ( $next['starts_at'] ?? '' ) ) );
+		$next_starts = (string) ( $next['starts_at'] ?? '' );
+		update_post_meta( $post_id, '_atx_starts_at', sanitize_text_field( $next_starts ) );
+		// Numeric (unix) mirror of the next date, so blocks can filter
+		// upcoming/past and sort chronologically with a NUMERIC meta_query.
+		update_post_meta( $post_id, '_atx_starts_at_ts', '' !== $next_starts ? (int) strtotime( $next_starts ) : 0 );
 		update_post_meta( $post_id, '_atx_ends_at', sanitize_text_field( (string) ( $next['ends_at'] ?? '' ) ) );
 		update_post_meta( $post_id, '_atx_venue_name', sanitize_text_field( (string) ( $venue['name'] ?? '' ) ) );
 		update_post_meta( $post_id, '_atx_venue_address', sanitize_text_field( (string) ( $venue['address'] ?? '' ) ) );

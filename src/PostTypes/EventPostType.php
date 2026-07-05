@@ -84,6 +84,7 @@ final class EventPostType {
 		return [
 			'_atx_event_id'                  => 'integer',
 			'_atx_starts_at'                 => 'string',
+			'_atx_starts_at_ts'              => 'integer',
 			'_atx_ends_at'                   => 'string',
 			'_atx_timezone'                  => 'string',
 			'_atx_max_capacity'              => 'integer',
