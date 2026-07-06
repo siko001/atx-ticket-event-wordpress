@@ -134,13 +134,16 @@ ticket checkout do.
   synced event from its local copy for as long as you like; when you bring
   Laravel back, run **Tools → Sync now** to catch up. (Note: while Laravel is
   down, new syncs and live ticket purchases won't work — display is unaffected.)
-- **Deactivating** never deletes anything.
-- **Deleting the plugin** honours **Settings → Tools → Data & uninstall**:
-  *Keep all data* (default — safe to reinstall/resume) or *Delete everything*
-  (removes mirrored events, categories, downloaded media, logs and settings).
-  A prompt with the same choice also appears when you click *Delete* on the
-  Plugins screen. No custom database tables are ever created, so nothing is
-  orphaned either way.
+- **Deactivating** never deletes anything on its own. Clicking *Deactivate* on
+  the Plugins screen opens a prompt with three choices:
+  *Deactivate only* (keep the plugin installed and all data — ideal for
+  hibernation), *Deactivate and delete the plugin — keep data* (removes the
+  plugin files but keeps the mirrored events for a later reinstall), or
+  *Deactivate and delete the plugin — remove all data* (a full wipe).
+- **Deleting** an already-inactive plugin shows the two data choices (keep /
+  remove all). Either entry point honours **Settings → Tools → Data & uninstall**,
+  which defaults to *Keep all data*. No custom database tables are ever created,
+  so nothing is orphaned whichever you choose.
 - **Removing the blocks** is safe: the ATX blocks are server-rendered, so if the
   plugin is gone they simply render nothing rather than breaking the page.
   (Shortcodes, if you used any, would show as literal text — prefer the blocks.)

@@ -53,6 +53,70 @@ final class Tools {
 		add_action( 'wp_ajax_atx_ticketing_create_pages', [ self::class, 'create_pages' ] );
 		add_action( 'wp_ajax_atx_ticketing_clear_logs', [ self::class, 'clear_logs' ] );
 		add_action( 'wp_ajax_atx_ticketing_set_uninstall_pref', [ self::class, 'set_uninstall_pref' ] );
+		add_action( 'wp_ajax_atx_ticketing_deactivate_delete', [ self::class, 'deactivate_delete' ] );
+	}
+
+	/**
+	 * Deactivate the plugin and delete it in one step, honouring the keep/remove
+	 * data choice. delete_plugins() runs uninstall.php, which reads the option we
+	 * set here. If the filesystem is not directly writable (so we can't delete
+	 * silently), we hand off to WordPress's native delete-confirmation screen
+	 * instead — the plugin is already deactivated by then, and the data
+	 * preference is saved, so uninstall.php still does the right thing.
+	 */
+	public static function deactivate_delete(): void {
+		if ( ! current_user_can( 'delete_plugins' ) || ! check_ajax_referer( self::NONCE, 'nonce', false ) ) {
+			wp_send_json_error( [ 'message' => __( 'Not allowed.', 'atx-digital-ticketing-connect' ) ], 403 );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified above.
+		$delete = isset( $_POST['delete'] ) && '1' === sanitize_text_field( wp_unslash( (string) $_POST['delete'] ) );
+
+		update_option( 'atx_ticketing_delete_data_on_uninstall', $delete ? 1 : 0 );
+
+		$basename = plugin_basename( ATX_TICKETING_FILE );
+
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+
+		deactivate_plugins( $basename );
+
+		// WordPress's own delete-confirmation URL — used as the fallback when we
+		// can't write to the filesystem without asking for credentials.
+		$confirm_url = wp_nonce_url(
+			add_query_arg(
+				[
+					'action'        => 'delete-selected',
+					'checked'       => [ $basename ],
+					'plugin_status' => 'all',
+				],
+				self_admin_url( 'plugins.php' )
+			),
+			'bulk-plugins'
+		);
+
+		// Try to delete right away (runs uninstall.php). Only possible when the
+		// filesystem is directly writable; otherwise fall back to the confirm UI.
+		$deleted = false;
+
+		if ( 'direct' === get_filesystem_method() ) {
+			ob_start();
+			$fs_ready = WP_Filesystem();
+			ob_end_clean();
+
+			if ( $fs_ready ) {
+				$result  = delete_plugins( [ $basename ] );
+				$deleted = ! is_wp_error( $result ) && false !== $result;
+			}
+		}
+
+		wp_send_json_success(
+			[
+				'redirect' => $deleted
+					? self_admin_url( 'plugins.php?deleted=true&plugin_status=all' )
+					: $confirm_url,
+			]
+		);
 	}
 
 	/**
