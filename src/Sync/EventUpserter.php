@@ -92,17 +92,25 @@ final class EventUpserter {
 	 */
 	private function sync_meta( int $post_id, array $event ): void {
 		$occurrences = is_array( $event['occurrences'] ?? null ) ? $event['occurrences'] : [];
-		$next        = $this->next_occurrence( $occurrences );
+		$now         = time();
+		$primary     = $this->primary_occurrence( $occurrences, $now );
+		$last_ts     = $this->last_occurrence_ts( $occurrences );
 		$venue       = is_array( $event['venue'] ?? null ) ? $event['venue'] : [];
 
 		update_post_meta( $post_id, '_atx_event_id', (int) $event['id'] );
 		update_post_meta( $post_id, '_atx_status', sanitize_text_field( (string) ( $event['status'] ?? '' ) ) );
-		$next_starts = (string) ( $next['starts_at'] ?? '' );
+		$next_starts = (string) ( $primary['starts_at'] ?? '' );
 		update_post_meta( $post_id, '_atx_starts_at', sanitize_text_field( $next_starts ) );
-		// Numeric (unix) mirror of the next date, so blocks can filter
-		// upcoming/past and sort chronologically with a NUMERIC meta_query.
+		// Numeric (unix) mirror of the representative date — the soonest upcoming
+		// occurrence, or the most recent one when they have all passed — used for
+		// chronological sorting.
 		update_post_meta( $post_id, '_atx_starts_at_ts', '' !== $next_starts ? (int) strtotime( $next_starts ) : 0 );
-		update_post_meta( $post_id, '_atx_ends_at', sanitize_text_field( (string) ( $next['ends_at'] ?? '' ) ) );
+		// The unix time of the last occurrence to finish. An event counts as
+		// "past" only once this has elapsed, so upcoming/past blocks split on it
+		// against the current time — an event with any future date stays upcoming
+		// even when some of its earlier dates are already over.
+		update_post_meta( $post_id, '_atx_last_ts', $last_ts );
+		update_post_meta( $post_id, '_atx_ends_at', sanitize_text_field( (string) ( $primary['ends_at'] ?? '' ) ) );
 		update_post_meta( $post_id, '_atx_venue_name', sanitize_text_field( (string) ( $venue['name'] ?? '' ) ) );
 		update_post_meta( $post_id, '_atx_venue_address', sanitize_text_field( (string) ( $venue['address'] ?? '' ) ) );
 		update_post_meta( $post_id, '_atx_venue_lat', sanitize_text_field( (string) ( $venue['lat'] ?? '' ) ) );
@@ -120,19 +128,57 @@ final class EventUpserter {
 	}
 
 	/**
-	 * The next upcoming occurrence, falling back to the first one.
+	 * The representative occurrence for display and sorting: the soonest
+	 * upcoming one, or — when every occurrence is in the past — the most recent.
 	 *
 	 * @param array<int, array<string, mixed>> $occurrences Occurrence list.
 	 * @return array<string, mixed>
 	 */
-	private function next_occurrence( array $occurrences ): array {
-		$now      = time();
-		$upcoming = array_filter(
-			$occurrences,
-			static fn ( $occurrence ) => strtotime( (string) ( $occurrence['starts_at'] ?? '' ) ) >= $now
-		);
+	private function primary_occurrence( array $occurrences, int $now ): array {
+		$soonest_upcoming = null;
+		$latest_past      = null;
 
-		return $upcoming ? reset( $upcoming ) : ( $occurrences[0] ?? [] );
+		foreach ( $occurrences as $occurrence ) {
+			$start = (int) strtotime( (string) ( $occurrence['starts_at'] ?? '' ) );
+
+			if ( ! $start ) {
+				continue;
+			}
+
+			if ( $start >= $now ) {
+				if ( null === $soonest_upcoming || $start < (int) strtotime( (string) $soonest_upcoming['starts_at'] ) ) {
+					$soonest_upcoming = $occurrence;
+				}
+			} elseif ( null === $latest_past || $start > (int) strtotime( (string) $latest_past['starts_at'] ) ) {
+				$latest_past = $occurrence;
+			}
+		}
+
+		return $soonest_upcoming ?? $latest_past ?? ( $occurrences[0] ?? [] );
+	}
+
+	/**
+	 * The unix time of the last occurrence to finish — its end, or its start
+	 * when no end is set. 0 when there are no occurrences.
+	 *
+	 * @param array<int, array<string, mixed>> $occurrences Occurrence list.
+	 */
+	private function last_occurrence_ts( array $occurrences ): int {
+		$last = 0;
+
+		foreach ( $occurrences as $occurrence ) {
+			$end = (int) strtotime( (string) ( $occurrence['ends_at'] ?? '' ) );
+
+			if ( ! $end ) {
+				$end = (int) strtotime( (string) ( $occurrence['starts_at'] ?? '' ) );
+			}
+
+			if ( $end > $last ) {
+				$last = $end;
+			}
+		}
+
+		return $last;
 	}
 
 	/**

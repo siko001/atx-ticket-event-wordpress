@@ -113,8 +113,12 @@ Filters & actions:
 For a custom Gutenberg block, register your own block and call
 `atx_ticketing_get_event()` / `atx_ticketing_get_events()` in its
 `render_callback` — the data shape is identical to what the built-in blocks use.
-Structured meta (`_atx_starts_at`, `_atx_starts_at_ts`, `_atx_venue_name`,
-`_atx_status`, …) is also readable directly with `get_post_meta()`.
+Structured meta (`_atx_starts_at`, `_atx_starts_at_ts`, `_atx_last_ts`,
+`_atx_venue_name`, `_atx_status`, …) is also readable directly with
+`get_post_meta()`. `_atx_starts_at_ts` is the representative date for sorting
+(soonest upcoming, or the most recent past occurrence); `_atx_last_ts` is when
+the event's final occurrence ends, which is how `scope=upcoming|past` splits the
+list — an event stays "upcoming" until *every* one of its dates has passed.
 
 Events **and** their categories are one-way mirrors: both are read-only in
 wp-admin (categories are viewable but not creatable/editable) — the ATX platform

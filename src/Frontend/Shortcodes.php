@@ -209,9 +209,12 @@ final class Shortcodes {
 		$now        = time();
 		$meta_query = [];
 
+		// Split on the last occurrence's end (_atx_last_ts): an event is
+		// "upcoming" while it still has a date that has not finished, and only
+		// becomes "past" once every one of its occurrences is over.
 		if ( 'upcoming' === $scope ) {
 			$meta_query[] = [
-				'key'     => '_atx_starts_at_ts',
+				'key'     => '_atx_last_ts',
 				'value'   => $now,
 				'compare' => '>=',
 				'type'    => 'NUMERIC',
@@ -220,13 +223,13 @@ final class Shortcodes {
 			$meta_query[] = [
 				'relation' => 'AND',
 				[
-					'key'     => '_atx_starts_at_ts',
+					'key'     => '_atx_last_ts',
 					'value'   => 0,
 					'compare' => '>',
 					'type'    => 'NUMERIC',
 				],
 				[
-					'key'     => '_atx_starts_at_ts',
+					'key'     => '_atx_last_ts',
 					'value'   => $now,
 					'compare' => '<',
 					'type'    => 'NUMERIC',
