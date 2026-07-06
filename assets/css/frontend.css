@@ -92,10 +92,16 @@
 	opacity: 0.6;
 }
 
-.atx-events__thumb img {
+.atx-events__thumb img,
+.atx-events__thumb video {
 	display: block;
 	width: 100%;
 	height: auto;
+}
+
+.atx-events__thumb--video {
+	display: block;
+	background: #000;
 }
 
 .atx-events__body {

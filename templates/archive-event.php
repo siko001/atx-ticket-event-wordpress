@@ -79,9 +79,28 @@ do_action( 'atx_ticketing_before_events', $atx_events_query, $atx_scope );
 		$timestamp  = isset( $atx_item['date_ts'] ) && false !== $atx_item['date_ts'] ? (int) $atx_item['date_ts'] : false;
 		$is_past    = ! empty( $atx_item['is_past'] );
 		?>
+		<?php
+		// WordPress can't use a video as a featured image, so when the event's
+		// main media is a video (sideloaded to _atx_main_media_id) fall back to
+		// a muted, looping inline video that behaves like an animated poster.
+		$atx_main_media_id = (int) get_post_meta( get_the_ID(), '_atx_main_media_id', true );
+		$atx_main_is_video = $atx_main_media_id > 0 && str_starts_with( (string) get_post_mime_type( $atx_main_media_id ), 'video/' );
+		$atx_video_poster  = $atx_main_is_video ? (string) get_the_post_thumbnail_url( $atx_main_media_id, 'medium_large' ) : '';
+		?>
 		<article class="atx-events__card<?php echo 'cancelled' === $atx_status ? ' is-cancelled' : ''; ?><?php echo $is_past ? ' is-past' : ''; ?>">
 			<?php if ( has_post_thumbnail() ) : ?>
 				<a href="<?php the_permalink(); ?>" class="atx-events__thumb"><?php the_post_thumbnail( 'medium_large' ); ?></a>
+			<?php elseif ( $atx_main_is_video ) : ?>
+				<a href="<?php the_permalink(); ?>" class="atx-events__thumb atx-events__thumb--video">
+					<video
+						src="<?php echo esc_url( (string) wp_get_attachment_url( $atx_main_media_id ) ); ?>"
+						<?php
+						if ( '' !== $atx_video_poster ) :
+							?>
+							poster="<?php echo esc_url( $atx_video_poster ); ?>"<?php endif; ?>
+						muted loop playsinline autoplay preload="metadata"
+					></video>
+				</a>
 			<?php endif; ?>
 
 			<div class="atx-events__body">
