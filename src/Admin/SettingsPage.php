@@ -54,6 +54,12 @@ final class SettingsPage {
 		add_settings_section( 'atx_ticketing_display', '', '__return_false', 'atx-ticketing-display' );
 		add_settings_field( 'use_plugin_templates', __( 'Event page templates', 'atx-digital-ticketing-connect' ), [ self::class, 'field_use_plugin_templates' ], 'atx-ticketing-display', 'atx_ticketing_display' );
 		add_settings_field( 'use_plugin_styles', __( 'Styling', 'atx-digital-ticketing-connect' ), [ self::class, 'field_use_plugin_styles' ], 'atx-ticketing-display', 'atx_ticketing_display' );
+		add_settings_field( 'archive_scope', __( 'Events archive shows', 'atx-digital-ticketing-connect' ), [ self::class, 'field_archive_scope' ], 'atx-ticketing-display', 'atx_ticketing_display' );
+
+		// Permalinks tab.
+		add_settings_section( 'atx_ticketing_permalinks', '', '__return_false', 'atx-ticketing-permalinks' );
+		add_settings_field( 'events_slug', __( 'Events URL slug', 'atx-digital-ticketing-connect' ), [ self::class, 'field_events_slug' ], 'atx-ticketing-permalinks', 'atx_ticketing_permalinks' );
+		add_settings_field( 'category_slug', __( 'Category URL slug', 'atx-digital-ticketing-connect' ), [ self::class, 'field_category_slug' ], 'atx-ticketing-permalinks', 'atx_ticketing_permalinks' );
 
 		// Pages tab.
 		add_settings_section( 'atx_ticketing_pages', '', '__return_false', 'atx-ticketing-pages' );
@@ -71,6 +77,21 @@ final class SettingsPage {
 	public static function sanitize( $input ): array {
 		$input   = (array) $input;
 		$current = Plugin::settings();
+
+		$events_slug = array_key_exists( 'events_slug', $input )
+			? ( sanitize_title( (string) $input['events_slug'] ) ?: 'events' )
+			: (string) ( $current['events_slug'] ?? 'events' );
+
+		$category_slug = array_key_exists( 'category_slug', $input )
+			? ( sanitize_title( (string) $input['category_slug'] ) ?: 'event-category' )
+			: (string) ( $current['category_slug'] ?? 'event-category' );
+
+		// A changed slug needs a rewrite-rules flush, deferred to the next init()
+		// once the post type re-registers with the new slug (see EventPostType).
+		if ( $events_slug !== (string) ( $current['events_slug'] ?? 'events' )
+			|| $category_slug !== (string) ( $current['category_slug'] ?? 'event-category' ) ) {
+			update_option( 'atx_ticketing_flush_rewrites', 1 );
+		}
 
 		return [
 			'api_base_url'         => array_key_exists( 'api_base_url', $input )
@@ -97,6 +118,11 @@ final class SettingsPage {
 			'test_mode'            => array_key_exists( 'test_mode', $input )
 				? (int) (bool) $input['test_mode']
 				: (int) $current['test_mode'],
+			'archive_scope'        => array_key_exists( 'archive_scope', $input ) && in_array( $input['archive_scope'], [ 'upcoming', 'past', 'all' ], true )
+				? (string) $input['archive_scope']
+				: (string) ( $current['archive_scope'] ?? 'upcoming' ),
+			'events_slug'          => $events_slug,
+			'category_slug'        => $category_slug,
 		];
 	}
 
@@ -115,6 +141,7 @@ final class SettingsPage {
 		$tabs = [
 			'connection' => __( 'Connection', 'atx-digital-ticketing-connect' ),
 			'display'    => __( 'Display', 'atx-digital-ticketing-connect' ),
+			'permalinks' => __( 'Permalinks', 'atx-digital-ticketing-connect' ),
 			'pages'      => __( 'Pages', 'atx-digital-ticketing-connect' ),
 			'tools'      => __( 'Tools', 'atx-digital-ticketing-connect' ),
 			'logs'       => __( 'Logs', 'atx-digital-ticketing-connect' ),
@@ -352,6 +379,47 @@ final class SettingsPage {
 				'workingLabel'   => __( 'Working…', 'atx-digital-ticketing-connect' ),
 			]
 		);
+	}
+
+	public static function field_archive_scope(): void {
+		$value   = (string) ( Plugin::settings()['archive_scope'] ?? 'upcoming' );
+		$options = [
+			'upcoming' => __( 'Upcoming events', 'atx-digital-ticketing-connect' ),
+			'all'      => __( 'All events', 'atx-digital-ticketing-connect' ),
+			'past'     => __( 'Past events', 'atx-digital-ticketing-connect' ),
+		];
+
+		echo '<select name="' . esc_attr( self::OPTION ) . '[archive_scope]">';
+		foreach ( $options as $key => $label ) {
+			printf(
+				'<option value="%1$s" %2$s>%3$s</option>',
+				esc_attr( $key ),
+				selected( $value, $key, false ),
+				esc_html( $label )
+			);
+		}
+		echo '</select>';
+		echo '<p class="description">' . esc_html__( 'What the /events/ archive shows by default. Visitors can override per-visit with ?scope=upcoming, ?scope=past or ?scope=all.', 'atx-digital-ticketing-connect' ) . '</p>';
+	}
+
+	public static function field_events_slug(): void {
+		printf(
+			'<code>%1$s/</code> <input type="text" name="%2$s[events_slug]" value="%3$s" class="regular-text" placeholder="events">',
+			esc_html( untrailingslashit( home_url() ) ),
+			esc_attr( self::OPTION ),
+			esc_attr( (string) ( Plugin::settings()['events_slug'] ?? 'events' ) )
+		);
+		echo '<p class="description">' . esc_html__( 'URL base for the events archive and single event pages (e.g. "events" → /events/). Set this once at launch — changing it later breaks existing links and bookmarks.', 'atx-digital-ticketing-connect' ) . '</p>';
+	}
+
+	public static function field_category_slug(): void {
+		printf(
+			'<code>%1$s/</code> <input type="text" name="%2$s[category_slug]" value="%3$s" class="regular-text" placeholder="event-category">',
+			esc_html( untrailingslashit( home_url() ) ),
+			esc_attr( self::OPTION ),
+			esc_attr( (string) ( Plugin::settings()['category_slug'] ?? 'event-category' ) )
+		);
+		echo '<p class="description">' . esc_html__( 'URL base for event category pages (e.g. "event-category" → /event-category/conference/).', 'atx-digital-ticketing-connect' ) . '</p>';
 	}
 
 	public static function field_use_plugin_templates(): void {

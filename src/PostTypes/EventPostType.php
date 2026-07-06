@@ -23,6 +23,10 @@ final class EventPostType {
 	public const TAXONOMY  = 'atx_event_category';
 
 	public static function register(): void {
+		$settings      = Plugin::settings();
+		$events_slug   = sanitize_title( (string) ( $settings['events_slug'] ?? 'events' ) ) ?: 'events';
+		$category_slug = sanitize_title( (string) ( $settings['category_slug'] ?? 'event-category' ) ) ?: 'event-category';
+
 		register_post_type(
 			self::POST_TYPE,
 			[
@@ -31,8 +35,8 @@ final class EventPostType {
 					'singular_name' => __( 'Event', 'atx-digital-ticketing-connect' ),
 				],
 				'public'       => true,
-				'has_archive'  => 'events',
-				'rewrite'      => [ 'slug' => 'events' ],
+				'has_archive'  => $events_slug,
+				'rewrite'      => [ 'slug' => $events_slug ],
 				'menu_icon'    => 'dashicons-tickets-alt',
 				'show_in_rest' => true,
 				// Content is owned by Laravel; the editor is intentionally absent.
@@ -56,7 +60,7 @@ final class EventPostType {
 				'public'       => true,
 				'hierarchical' => true,
 				'show_in_rest' => true,
-				'rewrite'      => [ 'slug' => 'event-category' ],
+				'rewrite'      => [ 'slug' => $category_slug ],
 				// Categories are owned by the ATX platform and pushed one-way, so
 				// the terms are viewable in wp-admin but not creatable, editable,
 				// deletable or manually assignable here. Sync writes them in code
@@ -69,6 +73,13 @@ final class EventPostType {
 				],
 			]
 		);
+
+		// A slug change (flagged when settings were saved) takes effect now that
+		// the post type and taxonomy have re-registered with the new rewrite base.
+		if ( get_option( 'atx_ticketing_flush_rewrites' ) ) {
+			flush_rewrite_rules( false );
+			delete_option( 'atx_ticketing_flush_rewrites' );
+		}
 
 		foreach ( self::structured_meta_keys() as $key => $type ) {
 			register_post_meta(

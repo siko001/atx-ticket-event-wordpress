@@ -323,6 +323,9 @@ final class Plugin {
 			'use_plugin_templates' => 1,
 			'use_plugin_styles'    => 1,
 			'test_mode'            => 0,
+			'archive_scope'        => 'upcoming',
+			'events_slug'          => 'events',
+			'category_slug'        => 'event-category',
 		];
 
 		$stored = get_option( 'atx_ticketing_settings', [] );

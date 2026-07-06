@@ -49,8 +49,16 @@ final class TemplateOverride {
 		if ( is_post_type_archive( EventPostType::POST_TYPE ) || is_tax( EventPostType::TAXONOMY ) ) {
 			$term = is_tax( EventPostType::TAXONOMY ) ? get_queried_object() : null;
 
+			// An explicit ?scope= wins; otherwise the archive's configured default.
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only display filter, no state change.
+			$requested = isset( $_GET['scope'] ) ? sanitize_key( wp_unslash( $_GET['scope'] ) ) : '';
+			$scope     = in_array( $requested, [ 'upcoming', 'past', 'all' ], true )
+				? $requested
+				: (string) ( Plugin::settings()['archive_scope'] ?? 'upcoming' );
+
 			self::$content = Shortcodes::events_list(
 				[
+					'scope'    => $scope,
 					'category' => $term instanceof WP_Term ? $term->slug : '',
 					'limit'    => 50,
 				]
