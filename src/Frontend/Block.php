@@ -43,6 +43,12 @@ final class Block {
 						'type'    => 'string',
 						'default' => 'upcoming',
 					],
+					// How "past" events are listed: finished (all dates over),
+					// occurrences (each past date) or events (any past date).
+					'pastMode' => [
+						'type'    => 'string',
+						'default' => 'finished',
+					],
 					'category' => [
 						'type'    => 'string',
 						'default' => '',
@@ -121,13 +127,14 @@ final class Block {
 
 		return Shortcodes::events_list(
 			[
-				'scope'    => (string) ( $attributes['scope'] ?? 'upcoming' ),
-				'category' => (string) ( $attributes['category'] ?? '' ),
-				'limit'    => (int) ( $attributes['limit'] ?? 12 ),
-				'orderby'  => (string) ( $attributes['orderby'] ?? 'date' ),
-				'order'    => (string) ( $attributes['order'] ?? '' ),
-				'layout'   => (string) ( $attributes['layout'] ?? 'grid' ),
-				'columns'  => (int) ( $attributes['columns'] ?? 3 ),
+				'scope'     => (string) ( $attributes['scope'] ?? 'upcoming' ),
+				'past_mode' => (string) ( $attributes['pastMode'] ?? 'finished' ),
+				'category'  => (string) ( $attributes['category'] ?? '' ),
+				'limit'     => (int) ( $attributes['limit'] ?? 12 ),
+				'orderby'   => (string) ( $attributes['orderby'] ?? 'date' ),
+				'order'     => (string) ( $attributes['order'] ?? '' ),
+				'layout'    => (string) ( $attributes['layout'] ?? 'grid' ),
+				'columns'   => (int) ( $attributes['columns'] ?? 3 ),
 			]
 		);
 	}

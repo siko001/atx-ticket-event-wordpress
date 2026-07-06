@@ -75,6 +75,7 @@
 		attributes: {
 			eventId: { type: 'number', default: 0 },
 			scope: { type: 'string', default: 'upcoming' },
+			pastMode: { type: 'string', default: 'finished' },
 			category: { type: 'string', default: '' },
 			limit: { type: 'number', default: 12 },
 			orderby: { type: 'string', default: 'date' },
@@ -108,6 +109,17 @@
 								{ value: 'all', label: __('All events', 'atx-digital-ticketing-connect') }
 							],
 							onChange: function (v) { set({ scope: v }); }
+						}),
+						a.scope === 'past' && el(SelectControl, {
+							label: __('Past shows', 'atx-digital-ticketing-connect'),
+							value: a.pastMode,
+							help: __('How past events are listed.', 'atx-digital-ticketing-connect'),
+							options: [
+								{ value: 'finished', label: __('Finished events (all dates over)', 'atx-digital-ticketing-connect') },
+								{ value: 'occurrences', label: __('Individual past dates', 'atx-digital-ticketing-connect') },
+								{ value: 'events', label: __('Events with a past date', 'atx-digital-ticketing-connect') }
+							],
+							onChange: function (v) { set({ pastMode: v }); }
 						}),
 						el(SelectControl, {
 							label: __('Category', 'atx-digital-ticketing-connect'),

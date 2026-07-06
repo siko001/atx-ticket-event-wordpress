@@ -35,22 +35,33 @@ final class Shortcodes {
 	public static function events_list( $atts ): string {
 		$atts = shortcode_atts(
 			[
-				'scope'    => 'upcoming',
-				'category' => '',
-				'limit'    => 12,
-				'orderby'  => 'date',
-				'order'    => '',
-				'layout'   => 'grid',
-				'columns'  => 3,
+				'scope'     => 'upcoming',
+				'past_mode' => 'finished',
+				'category'  => '',
+				'limit'     => 12,
+				'orderby'   => 'date',
+				'order'     => '',
+				'layout'    => 'grid',
+				'columns'   => 3,
 			],
 			(array) $atts,
 			'atx_events'
 		);
 
-		$scope  = self::clean_scope( (string) $atts['scope'] );
-		$layout = 'carousel' === $atts['layout'] ? 'carousel' : 'grid';
+		$scope     = self::clean_scope( (string) $atts['scope'] );
+		$past_mode = self::clean_past_mode( (string) $atts['past_mode'] );
+		$layout    = 'carousel' === $atts['layout'] ? 'carousel' : 'grid';
 
-		$query = self::query( $atts );
+		// Standard event-level listing uses a WP_Query. The two occurrence-aware
+		// past modes are expanded from each event's stored payload instead, so a
+		// recurring event surfaces its past dates even while it has upcoming ones.
+		if ( 'past' === $scope && 'finished' !== $past_mode ) {
+			$query = null;
+			$items = self::past_occurrence_items( $atts, $past_mode );
+		} else {
+			$query = self::query( $atts );
+			$items = self::items_from_query( $query );
+		}
 
 		Plugin::enqueue_frontend_style();
 
@@ -62,6 +73,7 @@ final class Shortcodes {
 			'archive-event',
 			[
 				'events_query' => $query,
+				'items'        => $items,
 				'layout'       => $layout,
 				'columns'      => max( 1, min( 4, (int) $atts['columns'] ) ),
 				'scope'        => $scope,
@@ -71,6 +83,129 @@ final class Shortcodes {
 		wp_reset_postdata();
 
 		return $html;
+	}
+
+	/**
+	 * Normalise a WP_Query of event posts into the card-item shape the template
+	 * renders (see past_occurrence_items() for the shape).
+	 *
+	 * @param WP_Query $query Event posts query.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function items_from_query( WP_Query $query ): array {
+		$now   = time();
+		$items = [];
+
+		foreach ( $query->posts as $post ) {
+			$starts_at = (string) get_post_meta( $post->ID, '_atx_starts_at', true );
+			$ts        = '' !== $starts_at ? (int) strtotime( $starts_at ) : 0;
+
+			$items[] = [
+				'post'    => $post,
+				'date_ts' => $ts > 0 ? $ts : false,
+				'status'  => (string) get_post_meta( $post->ID, '_atx_status', true ),
+				'is_past' => $ts > 0 && $ts < $now,
+			];
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Build card items from past occurrences across events, using each event's
+	 * stored payload. In "occurrences" mode every past date becomes its own
+	 * item; in "events" mode each event with a past date yields a single item
+	 * dated at its most recent past occurrence. Cancelled dates are absent from
+	 * the payload, so only genuine dates are considered.
+	 *
+	 * Item shape: [ 'post' => WP_Post, 'date_ts' => int|false, 'status' =>
+	 * string, 'is_past' => bool ].
+	 *
+	 * @param array<string, mixed> $atts Cleaned attributes.
+	 * @param string               $mode occurrences|events.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function past_occurrence_items( array $atts, string $mode ): array {
+		$now   = time();
+		$limit = min( 50, max( 1, (int) $atts['limit'] ) );
+
+		$args = [
+			'post_type'      => EventPostType::POST_TYPE,
+			'post_status'    => 'publish',
+			// Wide net: past dates are filtered from each event's payload in PHP,
+			// so we scan candidate events rather than paginate at the SQL layer.
+			'posts_per_page' => 200, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page
+			'no_found_rows'  => true,
+			'orderby'        => 'date',
+			'order'          => 'DESC',
+		];
+
+		if ( '' !== (string) $atts['category'] ) {
+			$args['tax_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+				[
+					'taxonomy' => EventPostType::TAXONOMY,
+					'field'    => 'slug',
+					'terms'    => sanitize_title( (string) $atts['category'] ),
+				],
+			];
+		}
+
+		$candidates = new WP_Query( $args );
+		$items      = [];
+
+		foreach ( $candidates->posts as $post ) {
+			$payload     = json_decode( (string) get_post_meta( $post->ID, '_atx_payload', true ), true );
+			$occurrences = is_array( $payload['occurrences'] ?? null ) ? $payload['occurrences'] : [];
+			$status      = (string) get_post_meta( $post->ID, '_atx_status', true );
+
+			$past_starts = [];
+			foreach ( $occurrences as $occurrence ) {
+				$start = (int) strtotime( (string) ( $occurrence['starts_at'] ?? '' ) );
+				$end   = (int) strtotime( (string) ( $occurrence['ends_at'] ?? '' ) );
+				$edge  = $end > 0 ? $end : $start;
+
+				if ( $edge > 0 && $edge < $now && $start > 0 ) {
+					$past_starts[] = $start;
+				}
+			}
+
+			if ( ! $past_starts ) {
+				continue;
+			}
+
+			if ( 'occurrences' === $mode ) {
+				foreach ( $past_starts as $start ) {
+					$items[] = [
+						'post'    => $post,
+						'date_ts' => $start,
+						'status'  => $status,
+						'is_past' => true,
+					];
+				}
+			} else { // 'events': one item per event, dated at its latest past date.
+				$items[] = [
+					'post'    => $post,
+					'date_ts' => max( $past_starts ),
+					'status'  => $status,
+					'is_past' => true,
+				];
+			}
+		}
+
+		// Most recent past date first.
+		usort(
+			$items,
+			static fn ( array $a, array $b ): int => ( (int) $b['date_ts'] ) <=> ( (int) $a['date_ts'] )
+		);
+
+		return array_slice( $items, 0, $limit );
+	}
+
+	/**
+	 * @param string $mode Raw past mode.
+	 */
+	private static function clean_past_mode( string $mode ): string {
+		return in_array( $mode, [ 'finished', 'occurrences', 'events' ], true ) ? $mode : 'finished';
 	}
 
 	/**
